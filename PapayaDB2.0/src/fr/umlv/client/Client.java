@@ -1,60 +1,57 @@
 package fr.umlv.client;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.cert.Certificate;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLPeerUnverifiedException;
 
 public class Client {
-	public static void main(String[] args) {
-		String https_url = "https://www.google.com/";
-		URL url;
+
+	protected HttpURLConnection urlconnection;
+
+	public void connect(URL url) throws Exception {
 		try {
-
-			url = new URL(https_url);
-			HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
-
-			// dumpl all cert info
-			print_https_cert(con);
-
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+			urlconnection = (HttpURLConnection) url.openConnection();
+			urlconnection.setDoInput(true);
+			urlconnection.setDoOutput(true);
+			urlconnection.setRequestMethod("GET");
+			urlconnection.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
+			urlconnection.connect();
+		} catch (Exception e) {
+			throw new Exception("Connection failed");
 		}
-
 	}
 
-	static void print_https_cert(HttpsURLConnection con) {
+	public void disconnect() {
+		urlconnection.disconnect();
+	}
 
-		if (con != null) {
+	public void displayResponse() throws Exception {
+		String line;
 
-			try {
-
-				System.out.println("Response Code : " + con.getResponseCode());
-				System.out.println("Cipher Suite : " + con.getCipherSuite());
-				System.out.println("\n");
-
-				Certificate[] certs = con.getServerCertificates();
-				for (Certificate cert : certs) {
-					System.out.println("Cert Type : " + cert.getType());
-					System.out.println("Cert Hash Code : " + cert.hashCode());
-					System.out.println("Cert Public Key Algorithm : " + cert.getPublicKey().getAlgorithm());
-					System.out.println("Cert Public Key Format : " + cert.getPublicKey().getFormat());
-					System.out.println("\n");
-				}
-
-			} catch (SSLPeerUnverifiedException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
+		try {
+			BufferedReader s = new BufferedReader(new InputStreamReader(urlconnection.getInputStream()));
+			line = s.readLine();
+			while (line != null) {
+				System.out.println(line);
+				line = s.readLine();
 			}
-
+			s.close();
+		} catch (Exception e) {
+			throw new Exception("Unable to read input stream");
 		}
-
 	}
 
+	public static void main(String argv[]) {
+
+		try {
+			Client c = new Client();
+			c.connect(new URL("http://localhost/8080"));
+			c.displayResponse();
+			c.disconnect();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }
