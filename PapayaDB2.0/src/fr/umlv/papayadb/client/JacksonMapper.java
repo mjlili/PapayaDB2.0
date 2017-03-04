@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class JacksonMapper {
 
@@ -25,24 +26,19 @@ public class JacksonMapper {
 		 * System.out.println("saisir le nom de la bd"); String collection =
 		 * sc.nextLine();
 		 */
-		
+
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			/*FileInputStream data = new FileInputStream(new File("jsonTest.txt"));
-			toJson(data);
-			*/
 			JsonParser jsonParser = new JsonFactory().createParser(new File("employee.txt"));
-			MappingIterator<JsonNode> json = mapper.readValues(jsonParser, JsonNode.class);
-			while(json.hasNext()) {
-				JsonNode node = json.next();
+			MappingIterator<ObjectNode> jsonObject = mapper.readValues(jsonParser, ObjectNode.class);
+			while (jsonObject.hasNext()) {
+				ObjectNode node = jsonObject.next();
+				node.putNull("_id");
 				JsonParser monJsonParser = node.traverse();
 				monJsonParser.nextToken();
 				jsonParse(mapper, monJsonParser);
 				System.out.println("***************");
 			}
-			//JsonNode jsonNode = mapper.readValue(new File("jsonTest.txt"), JsonNode.class);
-			// jsonParse(mapper, jsonParser);
-			
 
 		} catch (
 

@@ -43,6 +43,7 @@ public class Server extends AbstractVerticle {
 		// route to POST REST Methods
 		router.post("/:databasename/:username/:password").handler(this::createNewDatabase);
 		router.post("/:databasename/:documentname/*").handler(this::insertDocumentIntoDatabase);
+		router.post("/add").handler(this::insertNode);
 
 		// route to DELETE REST Methods
 		router.delete("/:databasename/:username/:password").handler(this::deleteDatabase);
@@ -56,6 +57,10 @@ public class Server extends AbstractVerticle {
 		System.out.println("listen on port 8080");
 	}
 
+		public void insertNode(RoutingContext routingContext){
+			routingContext.response().putHeader("Content-Type", "application/json")
+			.end("The document has been created successfully");
+		}
 	/**
 	 * this method dispatches the get request to the right method. it analyzes
 	 * the request and redirect it. whether it's a get base's names or get
@@ -121,7 +126,7 @@ public class Server extends AbstractVerticle {
 	public void getAllDatabases(RoutingContext routingContext) {
 		File databaseDirectory = new File("./Database");
 		File[] files = databaseDirectory.listFiles();
-		if (files.length == 1) {
+		if (files.length == 0) {
 			routingContext.response().putHeader("Content-Type", "application/json")
 					.end("Sorry but there are no database files created");
 			return;
