@@ -1,4 +1,4 @@
-package fr.umlv.client;
+package fr.umlv.papayadb.client;
 
 import java.net.URL;
 import java.io.*;

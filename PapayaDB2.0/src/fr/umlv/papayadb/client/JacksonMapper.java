@@ -1,4 +1,4 @@
-package fr.umlv.client;
+package fr.umlv.papayadb.client;
 
 import java.io.File;
 import java.io.IOException;

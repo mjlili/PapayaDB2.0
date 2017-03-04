@@ -1,4 +1,4 @@
-package fr.umlv.client;
+package fr.umlv.papayadb.client;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -9,15 +9,16 @@ public class Client {
 
 	protected HttpURLConnection urlconnection;
 
-	public void connect(URL url) throws Exception {
+	public void connect(String url) throws Exception {
+		URL serverUrl = new URL(url);
 		try {
-			urlconnection = (HttpURLConnection) url.openConnection();
+			urlconnection = (HttpURLConnection) serverUrl.openConnection();
 			urlconnection.setDoInput(true);
 			urlconnection.setDoOutput(true);
-			urlconnection.setRequestMethod("GET");
 			urlconnection.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
 			urlconnection.connect();
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new Exception("Connection failed");
 		}
 	}
@@ -46,7 +47,7 @@ public class Client {
 
 		try {
 			Client c = new Client();
-			c.connect(new URL("http://localhost/8080"));
+			c.connect("http://localhost:8080");
 			c.displayResponse();
 			c.disconnect();
 

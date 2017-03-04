@@ -1,7 +1,11 @@
-package server;
+package fr.umlv.papayadb.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -10,28 +14,43 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class App {
-	//tester github
 	public static void main(String[] args) {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
+			byte[] data = Files.readAllBytes(Paths.get("employee.json"));
+			List<JsonNode> jsonNodes = mapper.readValue(data, new TypeReference<List<JsonNode>>() {
+			});
+			System.out.println(jsonNodes.size());
 			JsonNode jsonNode = mapper.readTree(new File("employee.json"));
 			JsonParser monJsonParser = jsonNode.traverse();
+			ObjectNode objectNode = mapper.createObjectNode();
+			objectNode.putNull("_id");
+			Iterator<String> fields = jsonNode.fieldNames();
+			String fieldName;
+			while (fields.hasNext()) {
+				fieldName = fields.next();
+				objectNode.put(fieldName, jsonNode.path(fieldName).asText());
+			}
+			System.out.println(objectNode);
 			monJsonParser.nextToken();
+			// MÃ©thode de parcour d'un document json (txt, json ...)
 			jsonParse(mapper, monJsonParser);
 			System.out.println("***************");
 
 			mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-			// POJO to JSON Sérialisation
+			// POJO to JSON Sï¿½rialisation
 			mapper.writeValue(new File("article.json"), createArticle());
 			System.out.println("json created!");
 
-			// JSON to POJO Désérialisation
+			// JSON to POJO Dï¿½sï¿½rialisation
 			Article article = mapper.readValue(new File("article.json"), Article.class);
 			System.out.println(article);
 

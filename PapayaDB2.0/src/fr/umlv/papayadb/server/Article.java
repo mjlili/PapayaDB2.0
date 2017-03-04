@@ -1,4 +1,4 @@
-package server;
+package fr.umlv.papayadb.server;
 
 import java.util.LinkedList;
 import java.util.List;
