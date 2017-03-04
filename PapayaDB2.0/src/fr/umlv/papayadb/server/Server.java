@@ -59,7 +59,7 @@ public class Server extends AbstractVerticle {
 
 		public void insertNode(RoutingContext routingContext){
 			routingContext.response().putHeader("Content-Type", "application/json")
-			.end("The document has been created successfully");
+			.end("saved into data base");
 		}
 	/**
 	 * this method dispatches the get request to the right method. it analyzes
