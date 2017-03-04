@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
 
 import io.vertx.core.AbstractVerticle;
@@ -22,6 +21,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
 public class Server extends AbstractVerticle {
+ 
 	/**
 	 * this methods start the applicant server on port 8080 and routes the
 	 * client request to the right method
@@ -36,14 +36,14 @@ public class Server extends AbstractVerticle {
 		router.route("/*").handler(BodyHandler.create());
 
 		// route to GET REST APIs
-		router.get("/").handler(this::getAllDatabases);
+		router.get("/").handler(this::welcome);
 		router.get("/:databasename").handler(this::selectAllFromDatabase);
-		router.get("/:databasename?*").handler(this::getDocumentById);
+		router.get("/getbyid").handler(this::getDocumentById);
 
 		// route to POST REST Methods
 		router.post("/:databasename/:username/:password").handler(this::createNewDatabase);
-		router.post("/:databasename/:documentname/*").handler(this::insertDocumentIntoDatabase);
-		router.post("/add").handler(this::insertNode);
+		// router.post("/:databasename/:documentname/*").handler(this::insertDocumentIntoDatabase);
+		router.post("/add").handler(this::insertDocumentIntoDatabase);
 
 		// route to DELETE REST Methods
 		router.delete("/:databasename/:username/:password").handler(this::deleteDatabase);
@@ -57,10 +57,10 @@ public class Server extends AbstractVerticle {
 		System.out.println("listen on port 8080");
 	}
 
-		public void insertNode(RoutingContext routingContext){
-			routingContext.response().putHeader("Content-Type", "application/json")
-			.end("saved into data base");
-		}
+	public void welcome(RoutingContext routingContext) {
+		routingContext.response().putHeader("Content-Type", "application/json").end("***** PAPAYADB APPLICATION *****");
+	}
+
 	/**
 	 * this method dispatches the get request to the right method. it analyzes
 	 * the request and redirect it. whether it's a get base's names or get
@@ -77,7 +77,7 @@ public class Server extends AbstractVerticle {
 			selectAllFromDatabase(routingContext);
 		}
 	}
-	
+
 	/**
 	 * this method dispatches the post request to the right method. it analyzes
 	 * the request and redirect it. whether it's a create a new data base or
@@ -92,7 +92,7 @@ public class Server extends AbstractVerticle {
 		}
 		insertDocumentIntoDatabase(routingContext);
 	}
-	
+
 	/**
 	 * not implemented yet
 	 * 
@@ -101,7 +101,7 @@ public class Server extends AbstractVerticle {
 	public void disptachDeleteRequest(RoutingContext routingContext) {
 		deleteDatabase(routingContext);
 	}
-	
+
 	/**
 	 * returns true if the data base already exists
 	 * 
@@ -112,7 +112,9 @@ public class Server extends AbstractVerticle {
 	public boolean databaseExists(String databaseName) {
 		File databaseDirectory = new File("./Database");
 		File[] files = databaseDirectory.listFiles();
-		if (Arrays.stream(files).filter(database -> database.getName().equals(databaseName + ".json")).count() == 0) {
+		if (Arrays.stream(files).filter(
+				database -> database.getName().substring(0, database.getName().lastIndexOf(".")).equals(databaseName))
+				.count() == 0) {
 			return false;
 		}
 		return true;
@@ -132,8 +134,7 @@ public class Server extends AbstractVerticle {
 			return;
 		}
 		StringBuilder databases = new StringBuilder();
-		Arrays.stream(files).filter(database -> !database.getName().equals("database_index.json"))
-				.map(database -> database.getName().substring(0, database.getName().length() - 5))
+		Arrays.stream(files).map(database -> database.getName().substring(0, database.getName().lastIndexOf(".")))
 				.forEach(databaseName -> databases.append(databaseName).append("\n"));
 		routingContext.response().putHeader("Content-Type", "application/json").end(databases.toString());
 	}
@@ -243,7 +244,7 @@ public class Server extends AbstractVerticle {
 	}
 
 	/**
-	 * inserts a given document un the data base
+	 * inserts a given document in the data base
 	 * 
 	 * @param routingContext
 	 */
@@ -251,7 +252,7 @@ public class Server extends AbstractVerticle {
 		JsonObject requestAsJson = routingContext.getBodyAsJson();
 		if (pushAJsonDocumentWithMap(requestAsJson)) {
 			routingContext.response().putHeader("Content-Type", "application/json")
-					.end("The document has been created successfully");
+					.end("The document has been created successfully with as ID : " + requestAsJson.getValue("_id"));
 			return;
 		}
 		routingContext.response().putHeader("Content-Type", "application/json")
@@ -270,11 +271,13 @@ public class Server extends AbstractVerticle {
 	 */
 	private boolean pushAJsonDocumentWithMap(JsonObject requestAsJson) {
 		try {
-			RandomAccessFile randomAccessDatabaseFile = new RandomAccessFile(
-					"./Database/" + requestAsJson.getString("databasename") + ".json", "rw");
+			RandomAccessFile randomAccessDatabaseFile = new RandomAccessFile("./Database/papayaDB.db", "rw");
 			FileChannel databaseFileChannel = randomAccessDatabaseFile.getChannel();
 			databaseFileChannel.map(FileChannel.MapMode.READ_WRITE, 0, databaseFileChannel.size());
 			databaseFileChannel.position(databaseFileChannel.size());
+			StringBuilder documentIndex = new StringBuilder().append(databaseFileChannel.size()).append("_")
+					.append(Json.encodePrettily(requestAsJson).getBytes().length + "\n".getBytes().length);
+			requestAsJson.put("_id", documentIndex.toString());
 			databaseFileChannel.write(ByteBuffer.wrap(Json.encodePrettily(requestAsJson).getBytes()));
 			databaseFileChannel.write(ByteBuffer.wrap("\n".getBytes()));
 			databaseFileChannel.close();
@@ -286,46 +289,8 @@ public class Server extends AbstractVerticle {
 			e.printStackTrace();
 			return false;
 		}
-		if (associateDocumentToDatabase(requestAsJson)) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Associates a document to its database with a Json format into the
-	 * database_index.json file which is the global index of our application
-	 * 
-	 * @author jlilimk
-	 * @param routingContext
-	 * @return boolean true if the association was successfully made
-	 * @throws FileNotFoundException
-	 *             if the file doesn't exist
-	 * @throws IOException
-	 */
-	private boolean associateDocumentToDatabase(JsonObject requestAsJson) {
-		try {
-			RandomAccessFile randomAccessDatabaseIndexFile = new RandomAccessFile("./Database/database_index.json",
-					"rw");
-			FileChannel databaseIndexFileChannel = randomAccessDatabaseIndexFile.getChannel();
-			databaseIndexFileChannel.map(FileChannel.MapMode.READ_WRITE, 0, databaseIndexFileChannel.size());
-			databaseIndexFileChannel.position(databaseIndexFileChannel.size());
-			databaseIndexFileChannel.write(
-					ByteBuffer.wrap(Json.encodePrettily(Map.of("databasename", requestAsJson.getString("databasename"),
-							"documentname", requestAsJson.getString("documentname"))).getBytes()));
-			databaseIndexFileChannel.write(ByteBuffer.wrap("\n".getBytes()));
-			databaseIndexFileChannel.close();
-			randomAccessDatabaseIndexFile.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return false;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
 		return true;
 	}
-
 
 	/**
 	 * this method send a select request with filters to the data base server
@@ -336,7 +301,28 @@ public class Server extends AbstractVerticle {
 	 * 
 	 */
 	private void getDocumentById(RoutingContext routingContext) {
-
+		JsonObject requestAsJson = new JsonObject(); // routingContext.getBodyAsJson();
+		requestAsJson.put("_id", "13266_56");
+		String documentId = requestAsJson.getString("_id");
+		long startingIndex = Long.parseLong(documentId.substring(0, documentId.indexOf("_")));
+		long documentLength = Long.parseLong(documentId.substring(documentId.indexOf("_"), documentId.length()));
+		System.out.println("ICI");
+		try {
+			RandomAccessFile randomAccessDatabaseFile = new RandomAccessFile("./Database/papayaDB.db", "r");
+			FileChannel databaseFileChannel = randomAccessDatabaseFile.getChannel();
+			databaseFileChannel.map(FileChannel.MapMode.READ_ONLY, startingIndex, documentLength);
+			ByteBuffer documentContent = ByteBuffer.allocate((int) documentLength);
+			databaseFileChannel.read(documentContent);
+			databaseFileChannel.close();
+			randomAccessDatabaseFile.close();
+			for (int i = 0; i < documentContent.capacity(); i++) {
+				System.out.println(documentContent.getChar());
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void main(String[] args) {
