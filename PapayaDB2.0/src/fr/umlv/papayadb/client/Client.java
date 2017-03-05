@@ -118,11 +118,6 @@ public class Client {
 				ObjectNode node = jsonObject.next();
 				node.putNull("_id");
 				documents.add(node);
-				/*
-				 * JsonParser monJsonParser = node.traverse();
-				 * monJsonParser.nextToken(); jsonParse(mapper, monJsonParser);
-				 * System.out.println("***************");
-				 */
 			}
 		} catch (
 
@@ -136,23 +131,4 @@ public class Client {
 		return documents;
 	}
 
-	public static void main(String argv[]) {
-
-		try {
-			Client c = new Client();
-			List<ObjectNode> documents = new LinkedList<ObjectNode>();
-			documents = parseFile("person.json");
-			for (ObjectNode objectNode : documents) {
-				c.insertJson(objectNode);
-			}
-			ObjectMapper mapper = new ObjectMapper();
-			ObjectNode obj = mapper.createObjectNode();
-			obj.put("_id", "0_99");
-			c.findById(obj);
-			// c.deleteDocument(obj);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 }
