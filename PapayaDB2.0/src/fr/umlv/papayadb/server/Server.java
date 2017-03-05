@@ -21,13 +21,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
 public class Server extends AbstractVerticle {
- 
-	/**
-	 * this methods start the applicant server on port 8080 and routes the
-	 * client request to the right method
-	 * 
-	 * @author jlilimk
-	 */
+	
 	@Override
 	public void start() {
 		Router router = Router.router(vertx);
@@ -38,8 +32,8 @@ public class Server extends AbstractVerticle {
 		// route to GET REST APIs
 		router.get("/").handler(this::welcome);
 		router.get("/:databasename").handler(this::selectAllFromDatabase);
-		router.get("/getbyid").handler(this::getDocumentById);
-
+		router.post("/getbyid").handler(this::getDocumentById);
+		
 		// route to POST REST Methods
 		router.post("/:databasename/:username/:password").handler(this::createNewDatabase);
 		// router.post("/:databasename/:documentname/*").handler(this::insertDocumentIntoDatabase);
@@ -65,7 +59,7 @@ public class Server extends AbstractVerticle {
 	 * this method dispatches the get request to the right method. it analyzes
 	 * the request and redirect it. whether it's a get base's names or get
 	 * document's content from a base
-	 * 
+	 *
 	 * @param routingContext
 	 */
 	public void disptachGetRequest(RoutingContext routingContext) {
@@ -82,7 +76,7 @@ public class Server extends AbstractVerticle {
 	 * this method dispatches the post request to the right method. it analyzes
 	 * the request and redirect it. whether it's a create a new data base or
 	 * insert a document in a data base
-	 * 
+	 *
 	 * @param routingContext
 	 */
 	public void disptachPostRequest(RoutingContext routingContext) {
@@ -95,7 +89,7 @@ public class Server extends AbstractVerticle {
 
 	/**
 	 * not implemented yet
-	 * 
+	 *
 	 * @param routingContext
 	 */
 	public void disptachDeleteRequest(RoutingContext routingContext) {
@@ -104,7 +98,7 @@ public class Server extends AbstractVerticle {
 
 	/**
 	 * returns true if the data base already exists
-	 * 
+	 *
 	 * @param databasename
 	 *            a string containing the data base name
 	 * @return boolean exists or not
@@ -122,7 +116,7 @@ public class Server extends AbstractVerticle {
 
 	/**
 	 * the list of all data bases
-	 * 
+	 *
 	 * @param routingContext
 	 */
 	public void getAllDatabases(RoutingContext routingContext) {
@@ -141,7 +135,7 @@ public class Server extends AbstractVerticle {
 
 	/**
 	 * extracts the content of a data base
-	 * 
+	 *
 	 * @param routingContext
 	 */
 	public void selectAllFromDatabase(RoutingContext routingContext) {
@@ -163,7 +157,7 @@ public class Server extends AbstractVerticle {
 
 	/**
 	 * get a map of the data base file and parse it
-	 * 
+	 *
 	 * @param String-
 	 *            data base name
 	 * @return String - data base content
@@ -194,7 +188,7 @@ public class Server extends AbstractVerticle {
 
 	/**
 	 * creates a new data base - a new json file
-	 * 
+	 *
 	 * @param routingContext
 	 */
 	public void createNewDatabase(RoutingContext routingContext) {
@@ -218,7 +212,7 @@ public class Server extends AbstractVerticle {
 
 	/**
 	 * delete an existing data base
-	 * 
+	 *
 	 * @param routingContext
 	 */
 	public void deleteDatabase(RoutingContext routingContext) {
@@ -245,7 +239,7 @@ public class Server extends AbstractVerticle {
 
 	/**
 	 * inserts a given document in the data base
-	 * 
+	 *
 	 * @param routingContext
 	 */
 	public void insertDocumentIntoDatabase(RoutingContext routingContext) {
@@ -262,7 +256,7 @@ public class Server extends AbstractVerticle {
 	/**
 	 * add a document to the data base using a filechannel map and associate it
 	 * with a data base
-	 * 
+	 *
 	 * @author jlilimk
 	 * @param Json
 	 *            request
@@ -295,17 +289,17 @@ public class Server extends AbstractVerticle {
 	/**
 	 * this method send a select request with filters to the data base server
 	 * the method isn't implemented yet
-	 * 
+	 *
 	 * @author jlilimk
 	 * @param routingContext
-	 * 
+	 *
 	 */
 	private void getDocumentById(RoutingContext routingContext) {
-		JsonObject requestAsJson = new JsonObject(); // routingContext.getBodyAsJson();
-		requestAsJson.put("_id", "13266_56");
+		JsonObject requestAsJson = routingContext.getBodyAsJson();
+		//requestAsJson.put("_id", "13266_56");
 		String documentId = requestAsJson.getString("_id");
 		long startingIndex = Long.parseLong(documentId.substring(0, documentId.indexOf("_")));
-		long documentLength = Long.parseLong(documentId.substring(documentId.indexOf("_"), documentId.length()));
+		long documentLength = Long.parseLong(documentId.substring(documentId.indexOf("_")+1, documentId.length()));
 		System.out.println("ICI");
 		try {
 			RandomAccessFile randomAccessDatabaseFile = new RandomAccessFile("./Database/papayaDB.db", "r");

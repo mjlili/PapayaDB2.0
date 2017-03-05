@@ -20,56 +20,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Client {
 
-	protected HttpURLConnection urlconnection;
-
-	/*public void connect(String url) throws Exception {
-		URL serverUrl = new URL(url);
-		try {
-			urlconnection = (HttpURLConnection) serverUrl.openConnection();
-			urlconnection.setDoInput(true);
-			urlconnection.setDoOutput(true);
-			urlconnection.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
-			urlconnection.connect();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new Exception("Connection failed");
-		}
-	}
-	
-	public void disconnect() {
-		urlconnection.disconnect();
-	}
-*/
-	public void displayResponse() throws Exception {
-		String line;
-
-		try {
-			BufferedReader s = new BufferedReader(new InputStreamReader(urlconnection.getInputStream()));
-			line = s.readLine();
-			while (line != null) {
-				System.out.println(line);
-				line = s.readLine();
-			}
-			s.close();
-		} catch (Exception e) {
-			throw new Exception("Unable to read input stream");
-		}
-	}
-
-	public void insertJson(List<ObjectNode> node) throws Exception {
+	public void insertJson(ObjectNode node) throws Exception {
 
 		String url = "http://localhost:8080/add";
 		URL obj = new URL(url);
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-		
+
 		con.setRequestMethod("POST");
 		con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
 		con.setDoOutput(true);
 
 		OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
-		for (ObjectNode objectNode : node) {
-			wr.write(objectNode.toString());
-		}
+		wr.write(node.toString());
 
 		wr.flush();
 		wr.close();
@@ -85,6 +47,64 @@ public class Client {
 
 		System.out.println(response.toString());
 
+	}
+
+	public void findById(ObjectNode node) throws Exception {
+
+		String url = "http://localhost:8080/getbyid";
+		URL obj = new URL(url);
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+		con.setRequestMethod("POST");
+		con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+		con.setDoOutput(true);
+		con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+		con.setDoOutput(true);
+
+		OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
+		wr.write(node.toString());
+
+		wr.flush();
+		wr.close();
+
+		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+		String inputLine;
+		StringBuffer response = new StringBuffer();
+
+		while ((inputLine = in.readLine()) != null) {
+			response.append(inputLine);
+		}
+		in.close();
+
+		System.out.println(response.toString());
+
+	}
+
+	public void deleteDocument(ObjectNode node) throws Exception {
+		String url = "http://localhost:8080/delete";
+		URL obj = new URL(url);
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+		con.setRequestMethod("DELETE");
+		con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+		con.setDoOutput(true);
+
+		OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
+		wr.write(node.toString());
+
+		wr.flush();
+		wr.close();
+
+		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+		String inputLine;
+		StringBuffer response = new StringBuffer();
+
+		while ((inputLine = in.readLine()) != null) {
+			response.append(inputLine);
+		}
+		in.close();
+
+		System.out.println(response.toString());
 	}
 
 	static List<ObjectNode> parseFile(String file) throws Exception {
@@ -116,29 +136,20 @@ public class Client {
 		return documents;
 	}
 
-	/*
-	 * public static void jsonParse(ObjectMapper mapper, JsonParser
-	 * monJsonParser) throws IOException, JsonParseException,
-	 * JsonProcessingException { while (monJsonParser.getCurrentToken() !=
-	 * JsonToken.END_OBJECT) { if
-	 * (monJsonParser.getCurrentToken().equals(JsonToken.FIELD_NAME)) { String
-	 * fieldName = monJsonParser.getCurrentName(); monJsonParser.nextToken(); if
-	 * (monJsonParser.getCurrentToken().equals(JsonToken.START_ARRAY)) {
-	 * JsonNode array = Objects.requireNonNull(mapper.readTree(monJsonParser));
-	 * System.out.println(fieldName + " : " + array); } else if
-	 * (monJsonParser.getCurrentToken().equals(JsonToken.START_OBJECT)) {
-	 * System.out.println(fieldName + " : {"); jsonParse(mapper, monJsonParser);
-	 * System.out.println("} "); } else { String fieldValue =
-	 * monJsonParser.getText(); System.out.println(fieldName + " : " +
-	 * fieldValue); } } monJsonParser.nextToken(); } }
-	 */
 	public static void main(String argv[]) {
 
 		try {
 			Client c = new Client();
 			List<ObjectNode> documents = new LinkedList<ObjectNode>();
 			documents = parseFile("person.json");
-			c.insertJson(documents);
+			for (ObjectNode objectNode : documents) {
+				c.insertJson(objectNode);
+			}
+			ObjectMapper mapper = new ObjectMapper();
+			ObjectNode obj = mapper.createObjectNode();
+			obj.put("_id", "0_99");
+			c.findById(obj);
+			// c.deleteDocument(obj);
 
 		} catch (Exception e) {
 			e.printStackTrace();
